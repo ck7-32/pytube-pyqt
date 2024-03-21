@@ -8,10 +8,6 @@ import sys
 import urllib.request
 import os
 
-def find_resolution_index(resolution):
-    index = RES.index(resolution)
-    return index+1
-
 def thumbnail(url):
     return YouTube(url).thumbnail_url
 
