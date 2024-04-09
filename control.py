@@ -52,9 +52,9 @@ class MainWindow_controller(QtWidgets.QMainWindow):
     def getresolution(self):
             self.ui.resolution.clear
             res=[]
-            for stream in self.video.streams:
+            for stream in self.video.streams.filter(adaptive=True,file_extension='mp4'):
         # 如果解析度存在於串流中，添加到集合中
-                if stream.resolution:
+                #if stream.resolution and stream.is_progressive:
                     res.append(stream.resolution)
                     print(f"Resolution: {stream.resolution}")
                     print(f"File Format: {stream.mime_type}")
