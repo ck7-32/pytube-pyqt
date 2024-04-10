@@ -8,8 +8,6 @@ import sys
 import urllib.request
 import os
 
-def thumbnail(url):
-    return YouTube(url).thumbnail_url
 
 
 class MainWindow_controller(QtWidgets.QMainWindow):
@@ -19,6 +17,8 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         self.setup_control()
         self.video=None
+        self.itags=[]
+        self.res=[]
     def setup_control(self):
         self.clicked_counter = 0
         self.ui.loadvideo.clicked.connect(self.loadvideo)
@@ -30,6 +30,7 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         self.ui.progressBar.hide()
         self.ui.done.hide()
         self.ui.filesize.hide()
+        self.ui.audio.hide()
     def loadvideo(self):
         self.video=YouTube( self.ui.lineEdit.text(),on_progress_callback=self.progess)
         self.loadthumbnail()
@@ -51,25 +52,37 @@ class MainWindow_controller(QtWidgets.QMainWindow):
             self.ui.videotitle.setText(self.video.title)
     def getresolution(self):
             self.ui.resolution.clear
-            res=[]
-            for stream in self.video.streams.filter(adaptive=True,file_extension='mp4'):
+            self.res=[]
+            self.itags=[]
+            for stream in self.video.streams.filter(adaptive=True,file_extension='mp4'): 
+                codecs=stream.codecs[0].split(".")[0]
         # 如果解析度存在於串流中，添加到集合中
-                #if stream.resolution and stream.is_progressive:
-                    res.append(stream.resolution)
+                if stream.resolution and stream.mime_type == "video/mp4" and stream.type == "video" and codecs=="av01":
+                    self.res.append(stream.resolution)
+                    self.itags.append(stream.itag)
+                   
                     print(f"Resolution: {stream.resolution}")
+                    print(f"Fps: {stream.fps}")
                     print(f"File Format: {stream.mime_type}")
                     print(f"Audio Format: {stream.audio_codec}")
+                    print(f"codec: {codecs}")
                     print(f"File Size: {stream.filesize / (1024 * 1024):.2f} MB")
                     print("---------------")
-            self.ui.resolution.addItems(res)
+            self.ui.resolution.addItems(self.res)
             self.ui.resolution.setCurrentIndex(len(self.ui.resolution))
+            self.ui.audio.show()
+            self.ui.audio.setChecked(True)
 
     def downloadmp4(self,res="h"):
         yt = self.video
         if res =="h":
             yt.streams.filter().get_highest_resolution().download()
         else:
-            yt.streams.filter().get_by_resolution(res).download()
+            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download()
+        #如果要合成音檔的話:
+        if self.ui.audio.isChecked():
+            print("have to download audio")
+            yt.streams.get_audio_only().download()
 
     def bytes_to_megabytes(self,bytes_size):
         megabytes_size = bytes_size / (1024 ** 2)
