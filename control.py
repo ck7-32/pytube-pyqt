@@ -2,13 +2,13 @@ from PyQt6 import QtWidgets, QtGui
 
 
 from UI import Ui_Dialog
-
+import subprocess
 from pytubefix import YouTube
 import sys
 import urllib.request
 import os
 
-
+output_dir="downloads"
 
 class MainWindow_controller(QtWidgets.QMainWindow):
     def __init__(self):
@@ -19,6 +19,7 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         self.video=None
         self.itags=[]
         self.res=[]
+        self.title=""
     def setup_control(self):
         self.clicked_counter = 0
         self.ui.loadvideo.clicked.connect(self.loadvideo)
@@ -31,6 +32,8 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         self.ui.done.hide()
         self.ui.filesize.hide()
         self.ui.audio.hide()
+        if not os.path.exists(str(output_dir)):
+            os.makedirs(str(output_dir))
     def loadvideo(self):
         self.video=YouTube( self.ui.lineEdit.text(),on_progress_callback=self.progess)
         self.loadthumbnail()
@@ -49,7 +52,9 @@ class MainWindow_controller(QtWidgets.QMainWindow):
 
 
     def loadtitle(self):
-            self.ui.videotitle.setText(self.video.title)
+        self.title=self.video.title
+        self.ui.videotitle.setText(self.title)
+            
     def getresolution(self):
             self.ui.resolution.clear
             self.res=[]
@@ -76,13 +81,20 @@ class MainWindow_controller(QtWidgets.QMainWindow):
     def downloadmp4(self,res="h"):
         yt = self.video
         if res =="h":
-            yt.streams.filter().get_highest_resolution().download()
+            yt.streams.filter().get_highest_resolution().download("downloads")
         else:
-            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download()
+            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download("downloads")
         #如果要合成音檔的話:
         if self.ui.audio.isChecked():
             print("have to download audio")
-            yt.streams.get_audio_only().download()
+            yt.streams.get_audio_only().download("downloads",filename="audio.mp3")
+            # 獲取已下載的影片和音頻檔案路徑
+            video_file = os.path.join(output_dir, self.title)
+            audio_file = os.path.join(output_dir, "audio.mp3")
+
+            # 使用ffmpeg將影片和音頻檔案合併
+            output_file = os.path.join(output_dir, "merged.mp4")
+            subprocess.run(["ffmpeg", "-i", video_file, "-i", audio_file, "-c:v", "copy", "-c:a", "aac", output_file])
 
     def bytes_to_megabytes(self,bytes_size):
         megabytes_size = bytes_size / (1024 ** 2)
