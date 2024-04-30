@@ -56,14 +56,14 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         self.ui.videotitle.setText(self.title)
             
     def getresolution(self):
-            self.ui.resolution.clear
+            self.ui.resolution.clear()
             self.res=[]
             self.itags=[]
             for stream in self.video.streams.filter(adaptive=True,file_extension='mp4'): 
                 codecs=stream.codecs[0].split(".")[0]
         # 如果解析度存在於串流中，添加到集合中
-                if stream.resolution and stream.mime_type == "video/mp4" and stream.type == "video" and codecs=="av01":
-                    self.res.append(stream.resolution)
+                if stream.resolution and stream.mime_type == "video/mp4" and stream.type == "video" :
+                    self.res.append(f"{stream.resolution}/{stream.filesize / (1024 * 1024):.0f}mb")
                     self.itags.append(stream.itag)
                    
                     print(f"Resolution: {stream.resolution}")
@@ -73,6 +73,7 @@ class MainWindow_controller(QtWidgets.QMainWindow):
                     print(f"codec: {codecs}")
                     print(f"File Size: {stream.filesize / (1024 * 1024):.2f} MB")
                     print("---------------")
+            
             self.ui.resolution.addItems(self.res)
             self.ui.resolution.setCurrentIndex(len(self.ui.resolution))
             self.ui.audio.show()
@@ -84,17 +85,25 @@ class MainWindow_controller(QtWidgets.QMainWindow):
             yt.streams.filter().get_highest_resolution().download("downloads")
         else:
             yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download("downloads")
+        self.ui.filesize.hide()
+        self.ui.progressBar.hide()
+        self.ui.done.setText("下載完成")
         #如果要合成音檔的話:
         if self.ui.audio.isChecked():
+            self.ui.done.setText("正在合成音檔")
             print("have to download audio")
             yt.streams.get_audio_only().download("downloads",filename="audio.mp3")
             # 獲取已下載的影片和音頻檔案路徑
-            video_file = os.path.join(output_dir, self.title)
-            audio_file = os.path.join(output_dir, "audio.mp3")
+            
+            video_file =f"downloads\\{self.title}.mp4"  
+            audio_file =f"downloads\\audio.mp3"
 
             # 使用ffmpeg將影片和音頻檔案合併
-            output_file = os.path.join(output_dir, "merged.mp4")
-            subprocess.run(["ffmpeg", "-i", video_file, "-i", audio_file, "-c:v", "copy", "-c:a", "aac", output_file])
+            outputfile=os.path.join(f"downloads\\{self.title}merged.mp4")
+            subprocess.run(["ffmpeg", "-i", video_file, "-i", audio_file, "-c", "copy", outputfile])
+            os.remove(video_file)
+            os.remove(audio_file)
+            self.ui.done.setText("完成")
 
     def bytes_to_megabytes(self,bytes_size):
         megabytes_size = bytes_size / (1024 ** 2)
@@ -110,7 +119,6 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         if stream.filesize==current:
             self.ui.progressBar.hide()
             self.ui.done.show()
-            self.ui.filesize.hide()
 
     def download(self):
         rs=self.ui.resolution.currentText()
