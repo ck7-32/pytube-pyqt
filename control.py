@@ -9,6 +9,11 @@ import urllib.request
 import os
 
 output_dir="downloads"
+def fixfilename(filename):
+    invalid = '<>:"/\|?* '
+    for char in invalid:
+        filename = filename.replace(char, ' ')
+    return(filename)
 
 class MainWindow_controller(QtWidgets.QMainWindow):
     def __init__(self):
@@ -84,7 +89,7 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         if res =="h":
             yt.streams.filter().get_highest_resolution().download("downloads")
         else:
-            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download("downloads")
+            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download("downloads",filename="video.mp4")
         self.ui.filesize.hide()
         self.ui.progressBar.hide()
         self.ui.done.setText("下載完成")
@@ -95,11 +100,11 @@ class MainWindow_controller(QtWidgets.QMainWindow):
             yt.streams.get_audio_only().download("downloads",filename="audio.mp3")
             # 獲取已下載的影片和音頻檔案路徑
             
-            video_file =f"downloads\\{self.title}.mp4"  
+            video_file =f"downloads\\video.mp4"  
             audio_file =f"downloads\\audio.mp3"
 
             # 使用ffmpeg將影片和音頻檔案合併
-            outputfile=os.path.join(f"downloads\\{self.title}merged.mp4")
+            outputfile=os.path.join(f"downloads\\{fixfilename(self.title)}merged.mp4")
             subprocess.run(["ffmpeg", "-i", video_file, "-i", audio_file, "-c", "copy", outputfile])
             os.remove(video_file)
             os.remove(audio_file)
