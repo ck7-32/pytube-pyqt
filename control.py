@@ -70,7 +70,7 @@ class MainWindow_controller(QtWidgets.QMainWindow):
                 if stream.resolution and stream.mime_type == "video/mp4" and stream.type == "video" :
                     self.res.append(f"{stream.resolution}/{stream.filesize / (1024 * 1024):.0f}mb")
                     self.itags.append(stream.itag)
-                   
+                    """
                     print(f"Resolution: {stream.resolution}")
                     print(f"Fps: {stream.fps}")
                     print(f"File Format: {stream.mime_type}")
@@ -78,7 +78,7 @@ class MainWindow_controller(QtWidgets.QMainWindow):
                     print(f"codec: {codecs}")
                     print(f"File Size: {stream.filesize / (1024 * 1024):.2f} MB")
                     print("---------------")
-            
+                    """
             self.ui.resolution.addItems(self.res)
             self.ui.resolution.setCurrentIndex(len(self.ui.resolution))
             self.ui.audio.show()
@@ -95,20 +95,25 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         self.ui.done.setText("下載完成")
         #如果要合成音檔的話:
         if self.ui.audio.isChecked():
-            self.ui.done.setText("正在合成音檔")
+            self.ui.done.setText("正在下載音檔")
             print("have to download audio")
             yt.streams.get_audio_only().download("downloads",filename="audio.mp3")
+            self.ui.progressBar.hide()
+            self.ui.done.setText("正在使用ffmpeg合成")
             # 獲取已下載的影片和音頻檔案路徑
             
             video_file =f"downloads\\video.mp4"  
             audio_file =f"downloads\\audio.mp3"
 
             # 使用ffmpeg將影片和音頻檔案合併
-            outputfile=os.path.join(f"downloads\\{fixfilename(self.title)}merged.mp4")
-            subprocess.run(["ffmpeg", "-i", video_file, "-i", audio_file, "-c", "copy", outputfile])
-            os.remove(video_file)
-            os.remove(audio_file)
-            self.ui.done.setText("完成")
+            try:
+                outputfile=os.path.join(f"downloads\\{fixfilename(self.title)}merged.mp4")
+                subprocess.run(["ffmpeg", "-i", video_file, "-i", audio_file, "-c", "copy", outputfile])
+                os.remove(video_file)
+                os.remove(audio_file)
+                self.ui.done.setText("完成")
+            except:
+                self.ui.done.setText("發生錯誤 請檢查ffmpeg")
 
     def bytes_to_megabytes(self,bytes_size):
         megabytes_size = bytes_size / (1024 ** 2)
