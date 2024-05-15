@@ -401,7 +401,7 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Youtube下載器"))
         self.text1.setText(_translate("Dialog", "輸入網址"))
-        self.loadvideo.setText(_translate("Dialog", "下載mp4"))
+        self.loadvideo.setText(_translate("Dialog", "載入解析度"))
         self.mp3.setText(_translate("Dialog", "下載mp3"))
         self.quickmp4.setText(_translate("Dialog", "快速下載mp4"))
         self.text2.setText(_translate("Dialog", "解析度選擇"))
