@@ -4,7 +4,9 @@
 所以需要事先安裝  
 * 影片教學[【教學】如何安裝FFmpeg (Windows 10、Windows 11)](https://youtu.be/ERee4DY2LQ8?si=ilnnlYuDMEaG72dH)
 
-
+# 安裝
+點進右側的*Releases*的`pytube youtubedownloader ` 
+選擇*Assets*下的`pytube.youtubedownloader.exe`並且下載  
 # 功能介紹
 
 ![image](https://github.com/ck7-32/pytube-pyqt/blob/main/ui%20image.png?raw=true)
