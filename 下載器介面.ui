@@ -640,7 +640,7 @@
     </font>
    </property>
    <property name="text">
-    <string>下載mp4</string>
+    <string>載入解析度</string>
    </property>
   </widget>
   <widget class="QPushButton" name="mp3">
