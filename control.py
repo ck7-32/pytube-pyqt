@@ -8,7 +8,19 @@ import sys
 import urllib.request
 import os
 
-output_dir="downloads"
+
+def get_download_path():
+    """Returns the default downloads path for linux or windows"""
+    if os.name == 'nt':
+        import winreg
+        sub_key =(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders")
+        downloads_guid = '{374DE290-123F-4565-9164-39C4925E467B}'
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key) as key:
+            location = winreg.QueryValueEx(key, downloads_guid)[0]
+        return location
+    else:
+        return os.path.join(os.path.expanduser('~'), 'downloads')
+output_dir=get_download_path()    
 def fixfilename(filename):
     invalid = '<>:"/\|?* '
     for char in invalid:
@@ -26,6 +38,7 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         self.res=[]
         self.title=""
         self.url=""
+        self.path=get_download_path()
     def setup_control(self):
         self.clicked_counter = 0
         self.ui.loadvideo.clicked.connect(self.loadvideo)
@@ -117,9 +130,9 @@ class MainWindow_controller(QtWidgets.QMainWindow):
     def downloadmp4(self,res="h"):
         yt = self.video
         if res =="h":
-            yt.streams.filter().get_highest_resolution().download("downloads")
+            yt.streams.filter().get_highest_resolution().download(self.path)
         else:
-            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download("downloads",filename="video.mp4")
+            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download(self.path,filename="pyvideo.mp4")
         self.ui.filesize.hide()
         self.ui.progressBar.hide()
         self.ui.done.setText("下載完成")
@@ -127,17 +140,17 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         if self.ui.audio.isChecked():
             self.ui.done.setText("正在下載音檔")
             print("have to download audio")
-            yt.streams.get_audio_only().download("downloads",filename="audio.mp3")
+            yt.streams.get_audio_only().download(self.path,filename="pyaudio.mp3")
             self.ui.progressBar.hide()
             self.ui.done.setText("正在使用ffmpeg合成")
             # 獲取已下載的影片和音頻檔案路徑
             
-            video_file =f"downloads\\video.mp4"  
-            audio_file =f"downloads\\audio.mp3"
-
+            video_file =f"{self.path}\\pyvideo.mp4"  
+            audio_file =f"{self.path}\\pyaudio.mp3"
+            print(self.path)
             # 使用ffmpeg將影片和音頻檔案合併
             try:
-                outputfile=os.path.join(f"downloads\\{fixfilename(self.title)}merged.mp4")
+                outputfile=os.path.join(f"{self.path}\\{fixfilename(self.title)} merged.mp4")
                 subprocess.run(["ffmpeg", "-i", video_file, "-i", audio_file, "-c", "copy", outputfile])
                 os.remove(video_file)
                 os.remove(audio_file)
@@ -147,9 +160,9 @@ class MainWindow_controller(QtWidgets.QMainWindow):
     def downloadmp3(self,res="h"):
         yt = self.video
         if res =="h":
-            yt.streams.get_audio_only().download("downloads")
+            yt.streams.get_audio_only().download(self.path)
         else:
-            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download("downloads")
+            yt.streams.filter().get_by_itag(self.itags[self.res.index(res)]).download(self.path)
         self.ui.filesize.hide()
         self.ui.progressBar.hide()
         self.ui.done.setText("下載完成")
@@ -157,6 +170,7 @@ class MainWindow_controller(QtWidgets.QMainWindow):
         megabytes_size = bytes_size / (1024 ** 2)
         return megabytes_size
     def progess(self,stream, chunk, bytes_remaining):
+        self.ui.done.hide()
         self.ui.filesize.show()
         self.ui.filesize.setText("檔案大小:"+("{:.2f}".format(self.bytes_to_megabytes(stream.filesize)))+"MB")
         current = stream.filesize - bytes_remaining
